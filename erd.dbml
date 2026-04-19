@@ -1,0 +1,71 @@
+// ==========================================
+// 1. 회원 및 인증 (JWT & OAuth2)
+// ==========================================
+
+Table users {
+  id bigint [primary key]
+  email varchar [unique, note: '구글 이메일 (중복가입 방지)']
+  name varchar [note: '사용자 이름']
+  picture varchar [note: '프로필 이미지 URL']
+  provider varchar [note: '소셜 제공자 (ex: google)']
+  provider_id varchar [unique, note: '구글 고유 식별값(sub)']
+  role varchar [note: '사용자 권한 (ROLE_USER, ROLE_ADMIN)']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ⭐ 새로 추가된 JWT 토큰 관리 테이블
+Table refresh_tokens {
+  id bigint [primary key]
+  user_id bigint [note: '어떤 유저의 토큰인지']
+  token varchar [unique, note: '실제 Refresh Token 문자열']
+  user_agent varchar [note: '접속 환경 (ex: Chrome 브라우저, iPhone 앱) - 다중 기기 관리용']
+  expires_at timestamp [note: '토큰 만료 시간 (배치 프로그램으로 만료 토큰 삭제용)']
+  created_at timestamp
+}
+
+// ==========================================
+// 2. 서비스 비즈니스 (강의 및 리소스)
+// ==========================================
+
+Table lectures {
+  id bigint [primary key]
+  user_id bigint [note: '강의를 생성한 유저 ID']
+  title varchar [note: '강의/세션 제목']
+  created_at timestamp
+}
+
+Table records {
+  id bigint [primary key]
+  lecture_id bigint [unique, note: '어떤 강의의 기록인지 (1:1 관계)']
+  s3_audio_path varchar [note: '원본 음성 파일 S3 경로']
+  s3_transcript_path varchar [note: 'STT 자막 파일 S3 경로']
+  s3_vector_path varchar [note: 'AI 검색용 벡터 데이터 S3 경로']
+  duration int [note: '전체 녹음 시간(초)']
+  created_at timestamp
+}
+
+Table Messages {
+  message_id bigint [primary key]
+  record_id bigint [note: '어떤 녹음본에서 한 질문인지']
+  content text [note: '사용자가 AI에게 던진 질문']
+  is_agent boolean [note: 'agent 가 한 말인지 user가 한 말인지 구분']
+  created_at timestamp
+}
+
+// ==========================================
+// 3. 테이블 간의 관계 (Relationships)
+// ==========================================
+
+// 유저는 여러 기기에서 로그인하여 여러 개의 Refresh Token을 가질 수 있다 (1:N)
+Ref: users.id < refresh_tokens.user_id
+
+// 유저는 여러 개의 강의를 생성할 수 있다 (1:N)
+Ref: users.id < lectures.user_id
+
+// 하나의 강의는 단 하나의 녹음 기록을 가진다 (1:1)
+Ref: lectures.id - records.lecture_id
+
+// 하나의 녹음 기록 안에서 여러 번 질문할 수 있다 (1:N)
+Ref: records.id < Messages.record_id
+
