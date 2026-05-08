@@ -6,7 +6,11 @@ SERVER_DIR="$ROOT_DIR/stt-server"
 WEB_DIR="$ROOT_DIR/stt-web"
 
 cleanup() {
-  jobs -p | xargs -r kill 2>/dev/null || true
+  local pids
+  pids="$(jobs -p || true)"
+  if [ -n "$pids" ]; then
+    kill $pids 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 

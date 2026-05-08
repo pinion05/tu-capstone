@@ -9,6 +9,15 @@ It contains two runnable apps:
 
 No Docker is required; this example is intended to run with Python and Node.js directly.
 
+## Prerequisites
+
+Install these on your machine before running the example:
+
+- Python 3
+- Node.js and npm
+
+Docker is not required.
+
 ## Quick start
 
 From this directory:
@@ -17,7 +26,7 @@ From this directory:
 ./scripts/dev.sh
 ```
 
-Then open:
+The script starts both the FastAPI STT server and the Next.js web app. Then open:
 
 - Web app: http://localhost:3000/stt
 - STT server health: http://localhost:8765/health
@@ -54,4 +63,17 @@ export LLM_MODEL=glm-5-turbo
 ```
 
 The basic STT simulation flow works without LLM credentials.
+
+## Ports
+
+Defaults:
+
+- STT server: `8765`
+- Web app: `3000`
+
+If either port is already in use, override it when starting the script:
+
+```bash
+STT_SERVER_PORT=8876 STT_WEB_PORT=3001 ./scripts/dev.sh
+```
 
