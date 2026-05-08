@@ -7,6 +7,8 @@ It contains two runnable apps:
 - `stt-server`: FastAPI mock streaming STT server with bundled Korean text fixtures.
 - `stt-web`: Next.js UI for simulated/streaming STT, formatting, chat, and node-map generation.
 
+No Docker is required; this example is intended to run with Python and Node.js directly.
+
 ## Quick start
 
 From this directory:
@@ -52,10 +54,4 @@ export LLM_MODEL=glm-5-turbo
 ```
 
 The basic STT simulation flow works without LLM credentials.
-
-## Docker Compose
-
-```bash
-docker compose up --build
-```
 
