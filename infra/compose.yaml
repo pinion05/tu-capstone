@@ -1,0 +1,101 @@
+name: tu-capstone-dev
+
+services:
+  web:
+    image: node:20-bookworm-slim
+    working_dir: /workspace/apps/web
+    command: >-
+      sh -lc "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_ORCHESTRATOR_BASE_URL: "http://localhost:${ORCHESTRATOR_PORT:-8080}"
+      NEXT_PUBLIC_AGENT_WORKER_BASE_URL: "http://localhost:${AGENT_WORKER_PORT:-8765}"
+    depends_on:
+      orchestrator:
+        condition: service_started
+      agent-worker:
+        condition: service_started
+    volumes:
+      - ..:/workspace
+      - web_node_modules:/workspace/apps/web/node_modules
+
+  orchestrator:
+    image: eclipse-temurin:17-jdk
+    working_dir: /workspace/apps/orchestrator
+    command: >-
+      sh -lc "chmod +x ./gradlew && ./gradlew bootRun --args='--server.port=8080'"
+    ports:
+      - "${ORCHESTRATOR_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ..:/workspace
+      - gradle_cache:/root/.gradle
+
+  agent-worker:
+    image: python:3.11-slim
+    working_dir: /workspace/apps/agent-worker
+    command: >-
+      sh -lc "pip install -r requirements.txt && uvicorn server:app --host 0.0.0.0 --port 8765 --reload"
+    ports:
+      - "${AGENT_WORKER_PORT:-8765}:8765"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ..:/workspace
+      - pip_cache:/root/.cache/pip
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-capstone}"
+      POSTGRES_USER: "${POSTGRES_USER:-capstone}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-capstone}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-capstone} -d ${POSTGRES_DB:-capstone}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-minioadmin}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-minioadmin}"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  web_node_modules:
+  gradle_cache:
+  pip_cache:
+  postgres_data:
+  minio_data:
