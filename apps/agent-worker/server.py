@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("sst-mock")
+logger = logging.getLogger("stt-mock")
 
 SERVICE_NAME = "agent-worker"
 SERVICE_VERSION = "dev-scaffold"
