@@ -17,7 +17,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/health", "/api/v1/**").permitAll()
-                .anyRequest().permitAll());
+                .anyRequest().denyAll());
 
         return http.build();
     }

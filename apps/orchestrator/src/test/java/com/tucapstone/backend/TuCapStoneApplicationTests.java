@@ -49,6 +49,12 @@ class TuCapStoneApplicationTests {
     }
 
     @Test
+    void nonContractRouteIsDeniedByDefault() throws Exception {
+        mockMvc.perform(get("/internal-only"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void jobRequestRequiresRegisteredAudioObject() throws Exception {
         MvcResult sessionResult = mockMvc.perform(post("/api/v1/sessions")
                 .contentType(MediaType.APPLICATION_JSON)

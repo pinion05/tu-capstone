@@ -27,6 +27,16 @@ TEXT_DIR = Path(__file__).parent / "texts"
 DEFAULT_CHUNK_DELAY = 0.1
 DEFAULT_WORDS_PER_CHUNK = 15
 AUDIO_BYTES_PER_SEGMENT = 32000
+LOCAL_DEV_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+DEFAULT_FALLBACK_TEXT = "이것은 목업 음성 인식 서버의 기본 텍스트입니다."
+UNSAFE_BUNDLED_TEXT_MARKERS = (
+    ".mw-parser-output",
+    "{{",
+    "&nbsp;",
+    "이 문서의 전체 내용은 출처 가 분명하지 않습니다",
+    "[출처 필요]",
+)
+UNSAFE_BUNDLED_TEXT_SCAN_LIMIT = 2048
 
 
 @dataclass
@@ -75,14 +85,29 @@ def resolve_text_path(text_file: Optional[str]) -> Optional[Path]:
     if candidate.suffix != ".txt" or not candidate.exists():
         return None
 
+    if is_unsafe_bundled_text(candidate):
+        return None
+
     return candidate
 
 
+def is_unsafe_bundled_text(path: Path) -> bool:
+    preview = path.read_text(encoding="utf-8")[:UNSAFE_BUNDLED_TEXT_SCAN_LIMIT]
+    return any(marker in preview for marker in UNSAFE_BUNDLED_TEXT_MARKERS)
+
+
+def list_available_text_files() -> list[Path]:
+    if not TEXT_DIR.exists():
+        return []
+
+    return [path for path in sorted(TEXT_DIR.glob("*.txt")) if not is_unsafe_bundled_text(path)]
+
+
 def fallback_text() -> str:
-    files = sorted(TEXT_DIR.glob("*.txt"))
+    files = list_available_text_files()
     if files:
         return files[0].read_text(encoding="utf-8")
-    return "이것은 목업 음성 인식 서버의 기본 텍스트입니다."
+    return DEFAULT_FALLBACK_TEXT
 
 
 async def reject_invalid_websocket_request(websocket: WebSocket, message: str) -> None:
@@ -113,8 +138,9 @@ app = FastAPI(title="Mock Streaming STT Server", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[],
+    allow_origin_regex=LOCAL_DEV_ORIGIN_REGEX,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -147,11 +173,10 @@ async def health():
 @app.get("/texts")
 async def list_texts():
     texts = []
-    if TEXT_DIR.exists():
-        for f in sorted(TEXT_DIR.glob("*.txt")):
-            content = f.read_text(encoding="utf-8")
-            size = f.stat().st_size
-            texts.append({"name": f.name, "size": size, "chars": len(content)})
+    for f in list_available_text_files():
+        content = f.read_text(encoding="utf-8")
+        size = f.stat().st_size
+        texts.append({"name": f.name, "size": size, "chars": len(content)})
     return {"texts": texts, "directory": str(TEXT_DIR)}
 
 
