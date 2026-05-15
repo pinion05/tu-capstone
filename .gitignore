@@ -1,4 +1,5 @@
 .omx/
+.idea/
 .DS_Store
 **/.DS_Store
 node_modules/
