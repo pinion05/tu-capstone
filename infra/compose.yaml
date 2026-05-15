@@ -2,7 +2,7 @@ name: tu-capstone-dev
 
 services:
   web:
-    image: node:20-bookworm-slim
+    image: node:20-alpine
     working_dir: /workspace/apps/web
     command: >-
       sh -lc "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
@@ -21,7 +21,7 @@ services:
       - web_node_modules:/workspace/apps/web/node_modules
 
   orchestrator:
-    image: eclipse-temurin:17-jdk
+    image: eclipse-temurin:17-jdk-alpine
     working_dir: /workspace/apps/orchestrator
     command: >-
       sh -lc "chmod +x ./gradlew && ./gradlew bootRun --args='--server.port=8080'"
@@ -37,7 +37,7 @@ services:
       - gradle_cache:/root/.gradle
 
   agent-worker:
-    image: python:3.11-slim
+    image: python:3.11-alpine
     working_dir: /workspace/apps/agent-worker
     command: >-
       sh -lc "pip install -r requirements.txt && uvicorn server:app --host 0.0.0.0 --port 8765 --reload"
