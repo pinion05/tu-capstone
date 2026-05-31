@@ -14,8 +14,7 @@ services:
     depends_on:
       orchestrator:
         condition: service_started
-      agent-worker:
-        condition: service_started
+    profiles: ["core", "full"]
     volumes:
       - ..:/workspace
       - web_node_modules:/workspace/apps/web/node_modules
@@ -27,14 +26,36 @@ services:
       sh -lc "chmod +x ./gradlew && ./gradlew bootRun --args='--server.port=8080'"
     ports:
       - "${ORCHESTRATOR_PORT:-8080}:8080"
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-capstone}"
+      SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER:-capstone}"
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD:-capstone}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+    profiles: ["core", "full"]
     volumes:
       - ..:/workspace
       - gradle_cache:/root/.gradle
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-capstone}"
+      POSTGRES_USER: "${POSTGRES_USER:-capstone}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-capstone}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    profiles: ["core", "full"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-capstone} -d ${POSTGRES_DB:-capstone}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   agent-worker:
     image: python:3.11-slim
@@ -46,25 +67,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    profiles: ["full"]
     volumes:
       - ..:/workspace
       - pip_cache:/root/.cache/pip
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: "${POSTGRES_DB:-capstone}"
-      POSTGRES_USER: "${POSTGRES_USER:-capstone}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-capstone}"
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-capstone} -d ${POSTGRES_DB:-capstone}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   minio:
     image: quay.io/minio/minio:latest
@@ -75,6 +81,7 @@ services:
     ports:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    profiles: ["full"]
     volumes:
       - minio_data:/data
     healthcheck:
@@ -87,6 +94,7 @@ services:
     image: redis:7-alpine
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    profiles: ["full"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
