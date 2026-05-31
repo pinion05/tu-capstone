@@ -18,12 +18,4 @@ public class UserResponse {
     private String role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    public void updateOAuthInfo(String name, String picture, String provider, String providerId) {
-        this.name = name;
-        this.picture = picture;
-        this.provider = provider;
-        this.providerId = providerId;
-        this.updatedAt = LocalDateTime.now();
-    }
 }

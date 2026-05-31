@@ -1,33 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function OAuth2RedirectPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
 
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken');
-    // We can also get refreshToken if needed, but for now we store accessToken
-
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
-      
-      // Fetch user data with the new token
-      refreshUser().then(() => {
-        router.push('/');
-      }).catch((err) => {
-        console.error('Failed to load user data after OAuth2 login', err);
-        router.push('/login?error=auth_failed');
-      });
-    } else {
-      router.push('/login?error=missing_token');
-    }
-  }, [searchParams, router, refreshUser]);
+    // Tokens are now securely set as HttpOnly cookies by the backend
+    refreshUser().then(() => {
+      router.push('/');
+    }).catch((err) => {
+      console.error('Failed to load user data after OAuth2 login', err);
+      router.push('/login?error=auth_failed');
+    });
+  }, [router, refreshUser]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">

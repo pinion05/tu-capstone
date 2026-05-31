@@ -1,5 +1,6 @@
-package com.tucapstone.backend.dto.response;
+package com.tucapstone.backend.security;
 
+import com.tucapstone.backend.dto.response.UserResponse;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

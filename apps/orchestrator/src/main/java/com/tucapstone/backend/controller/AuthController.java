@@ -29,7 +29,21 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
         authService.logout(userDetails.getUsername());
-        return ResponseEntity.ok().build();
+
+        org.springframework.http.ResponseCookie accessCookie = org.springframework.http.ResponseCookie.from("accessToken", "")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refreshToken", "")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .build();
     }
 
     @Operation(summary = "로그인 (임시)", description = "테스트용 로그인을 수행하고 토큰을 발급합니다.")
@@ -40,7 +54,36 @@ public class AuthController {
 
     @Operation(summary = "토큰 갱신", description = "Refresh Token을 사용하여 Access Token을 재발급합니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@RequestParam String refreshToken) {
-        return ResponseEntity.ok(authService.refresh(refreshToken));
+    public ResponseEntity<TokenResponse> refresh(
+            @CookieValue(value = "refreshToken", required = false) String cookieRefreshToken,
+            @RequestParam(required = false) String refreshToken) {
+            
+        String token = cookieRefreshToken != null ? cookieRefreshToken : refreshToken;
+        if (token == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        TokenResponse tokenResponse = authService.refresh(token);
+        
+        org.springframework.http.ResponseCookie accessCookie = org.springframework.http.ResponseCookie.from("accessToken", tokenResponse.getAccessToken())
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // Change to true in production
+                .sameSite("Lax")
+                .maxAge(3600)
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // Change to true in production
+                .sameSite("Lax")
+                .maxAge(604800)
+                .build();
+        
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(tokenResponse);
     }
 }

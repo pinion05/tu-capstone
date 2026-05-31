@@ -1,6 +1,6 @@
 package com.tucapstone.backend.service;
 
-import com.tucapstone.backend.dto.response.PrincipalUser;
+import com.tucapstone.backend.security.PrincipalUser;
 import com.tucapstone.backend.dto.response.UserResponse;
 import com.tucapstone.backend.entity.User;
 import com.tucapstone.backend.repository.UserRepository;

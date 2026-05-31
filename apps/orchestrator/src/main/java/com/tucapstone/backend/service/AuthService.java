@@ -71,7 +71,7 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = com.tucapstone.backend.exception.TokenExpiredException.class)
     public TokenResponse refresh(String refreshTokenString) {
         if (!jwtTokenProvider.validateToken(refreshTokenString)) {
             throw new RuntimeException("Invalid Refresh Token");
@@ -82,7 +82,7 @@ public class AuthService {
 
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh Token expired");
+            throw new com.tucapstone.backend.exception.TokenExpiredException("Refresh Token expired");
         }
 
         User user = refreshToken.getUser();
@@ -90,7 +90,7 @@ public class AuthService {
         String newRefreshTokenString = jwtTokenProvider.createRefreshToken(user.getEmail());
 
         refreshToken.setToken(newRefreshTokenString);
-        refreshToken.setExpiresAt(LocalDateTime.now().plusNanos(refreshTokenExpiration * 1000000));
+        refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000));
         refreshTokenRepository.save(refreshToken);
 
         return TokenResponse.builder()

@@ -4,12 +4,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-
   const headers = new Headers(options.headers);
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
   
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -20,12 +15,27 @@ export async function apiFetch<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   if (response.status === 401) {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-      // Potential logic for auto-redirect or refresh token call
+      try {
+        const refreshRes = await fetch(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (refreshRes.ok) {
+          const newResponse = await fetch(url, { ...options, headers, credentials: 'include' });
+          if (!newResponse.ok) throw new Error('Retry failed');
+          return newResponse.status === 204 ? {} as T : newResponse.json();
+        } else {
+          window.location.href = '/login?error=session_expired';
+        }
+      } catch (e) {
+        window.location.href = '/login?error=session_expired';
+      }
     }
   }
 
