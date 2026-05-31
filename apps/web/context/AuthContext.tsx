@@ -35,26 +35,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: false,
         isLoading: false,
       });
-      localStorage.removeItem('accessToken');
     }
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      refreshUser();
-    } else {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    // 쿠키 기반 인증이므로 무조건 서버에 내 정보를 확인하여 세션 유지 판단
+    refreshUser();
   }, [refreshUser]);
 
   const login = useCallback(async (email: string) => {
     try {
-      const { accessToken } = await apiFetch<TokenResponse>(
+      await apiFetch<TokenResponse>(
         `${ENDPOINTS.AUTH.LOGIN_TEMP}?email=${encodeURIComponent(email)}`, 
         { method: 'POST' }
       );
-      localStorage.setItem('accessToken', accessToken);
       await refreshUser();
     } catch (error) {
       console.error('Login failed:', error);
@@ -68,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      localStorage.removeItem('accessToken');
       setState({
         user: null,
         isAuthenticated: false,
