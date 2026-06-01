@@ -1,8 +1,11 @@
 'use client';
 
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardOverview() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 min-h-[75vh]">
       <div className="max-w-2xl w-full flex flex-col items-center text-center space-y-10">
@@ -33,7 +36,12 @@ export default function DashboardOverview() {
         </div>
 
         {/* Start Card */}
-        <div className="w-full max-w-[600px] mt-10 cursor-pointer bg-white border border-[#e5e7eb]/80 rounded-[20px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-200 group py-14 flex flex-col items-center justify-center space-y-6">
+        <button
+          type="button"
+          onClick={() => router.push("/protected/live")}
+          className="w-full max-w-[600px] mt-10 cursor-pointer bg-white border border-[#e5e7eb]/80 rounded-[20px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-200 group py-14 flex flex-col items-center justify-center space-y-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#61efce]/40"
+          aria-label="새 강의 시작하기"
+        >
           <div className="bg-[#0b1021] text-white p-3.5 rounded-full group-hover:scale-105 transition-transform duration-200">
             <Plus className="w-6 h-6 stroke-[2.5]" />
           </div>
@@ -41,7 +49,7 @@ export default function DashboardOverview() {
             <h3 className="text-[19px] font-bold text-[#111827]">새 강의 시작하기</h3>
             <p className="text-[15px] text-[#6b7280] font-medium">동영상 링크나 문서를 업로드하세요</p>
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );

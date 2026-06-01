@@ -3,7 +3,7 @@
 import { useAuth } from "../../context/AuthContext";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Settings, 
@@ -23,6 +23,7 @@ export default function ProtectedLayout({
 }) {
   const { logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <ProtectedRoute>
@@ -39,7 +40,11 @@ export default function ProtectedLayout({
           </div>
 
           <div className="px-5 pb-6">
-            <Button className="w-full bg-[#0b1021] hover:bg-[#0b1021]/90 text-white justify-start relative h-[52px] rounded-xl shadow-md">
+            <Button
+              type="button"
+              onClick={() => router.push("/protected/live")}
+              className="w-full bg-[#0b1021] hover:bg-[#0b1021]/90 text-white justify-start relative h-[52px] rounded-xl shadow-md"
+            >
               <PlusCircle className="mr-3 h-[18px] w-[18px]" />
               <span className="font-bold text-[15px]">새 강의 시작</span>
               <span className="absolute right-4 text-[11px] text-white/50 font-medium">Ctrl+N</span>

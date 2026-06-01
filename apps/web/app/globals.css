@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+@keyframes edupulseGeminiBar {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+.edupulse-gemini-bar {
+  animation: edupulseGeminiBar 1s ease-in-out infinite;
+  transform-origin: center;
+}
