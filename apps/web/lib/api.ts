@@ -33,7 +33,7 @@ export async function apiFetch<T>(
         } else {
           window.location.href = '/login?error=session_expired';
         }
-      } catch (e) {
+      } catch {
         window.location.href = '/login?error=session_expired';
       }
     }

@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // 쿠키 기반 인증이므로 무조건 서버에 내 정보를 확인하여 세션 유지 판단
-    refreshUser();
+    queueMicrotask(() => {
+      void refreshUser();
+    });
   }, [refreshUser]);
 
   const login = useCallback(async (email: string) => {
