@@ -37,11 +37,17 @@ cp infra/.env.example infra/.env
 docker compose --env-file infra/.env -f infra/compose.yaml up
 ```
 
+ElevenLabs 실시간 전사를 사용할 경우 `infra/.env`에 `ELEVENLABS_API_KEY`를 설정한 뒤 web 컨테이너를 재시작한다.
+
 기본 접속 포트:
 - web: `http://localhost:3000`
 - orchestrator: `http://localhost:8080/health`
 - agent-worker: `http://localhost:8765/health`
 - minio console: `http://localhost:9001`
+
+## 변경 로그
+- `2026-06-02`: `/protected/live` 실시간 강의 화면을 추가하고 ElevenLabs Scribe Realtime WebSocket 기반 마이크 전사를 연결했다. API Key는 서버 API Route에서 single-use token으로 교환해 클라이언트에 직접 노출하지 않는다. AI 질의응답 영역은 목업 상태로 유지한다.
+- `2026-06-02`: Docker web 서비스와 `infra/.env.example`에 `ELEVENLABS_API_KEY` 설정 항목을 추가했다.
 
 ## 문서
 - 공용 계약 / 요청응답 예시: `packages/contracts/README.md`
